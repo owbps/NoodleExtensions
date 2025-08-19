@@ -1,42 +1,49 @@
-# Noodle Extensions
+# Noodle Extensions (Quest 1.40.8 Port)
 
-A port of the Noodle Extensions mod made originally for the PC version of Beat Saber to the Oculus Quest platform.
+This is a **work-in-progress port** of the Noodle Extensions mod for Beat Saber **1.40.8 (Quest)**. The goal is to bring back the advanced mapping tools and visual capabilities from earlier versions.
 
-## FAQ (Frequently Asked Questions)
-- Why are the wall colors not the same as PC (desaturated, transparent etc.)?
-  - Due to the Quest not having distortion on walls, Noodle Extensions will attempt to change the walls materials to solid if these conditions are met:
-    - Wall color alpha (controlled by Chroma) is greater than or equal 0
-    - Dissolve animation is being applied
-- Bombs are not coloring/are always black
-  - A bug specific to Quest causes bombs to lose their color/default to black when dissolve animation is being applied. It is not certain if this bug will be fixed or worked around.
-- Why does Noodle Extensions disable my Qosmetics notes/walls?
-  - Qosmetics notes/walls drastically reduce performance especially in Noodle maps and also ruin the artistic experience. 
-- Why do you suggest disabling Mapping Extensions? It works fine for me
-  - While it _could_ work, we didn't extensively test the impact of performance or stability using Mapping Extensions. It's at your discretion if you choose to use Mapping Extensions simultaneously with Noodle.
-  - While some maps do "require" both Noodle Extensions and Mapping Extensions, this is not a supported scenario in either PC or Quest and should be discouraged.
-- Where are Tracks/CustomJSONData QMod downloads?
-  - Noodle Extensions and Chroma will download these dependencies automatically
-- Noodle Extensions isn't loading/working and PinkCore says I don't have the mod installed
-  - Try to reinstall Noodle Extensions and update Chroma to at least version 2.5.7 or newer.
-- I found a map that doesn't work!!!!11!!11!/Noodle is missing a feature
-  - You most likely downloaded the wrong map as most Noodle features are supported (no exceptions except the TODO)
-  - In the case you are absolutely certain you found a bug/missing feature, report it in GitHub issues along with a log and steps to reproduce the issue. Footage of said map is also recommended being provided.
+## Current Status
+
+* ✅ Freely positioned walls
+* ✅ Freely positioned notes
+* ⚠️ Many animation features are still missing or unstable
+* ⚠️ Bugs and incomplete behavior are expected
+
+## What Doesn’t Work Yet
+
+* Note/track animations
+* Fake note handling
+* Some Chroma/Mapping Extensions interactions
+* Visual effects such as dissolves and transparency
+
+## Roadmap
+
+* Restore full note/track animation support
+* Fix visual and playback glitches
+* Re-implement missing features from the 1.37 Quest port
+* Improve stability and compatibility with Chroma and Mapping Extensions
 
 ## Building from Source
 
-You'll need [qpm_rust](https://github.com/RedBrumbler/QuestPackageManager-Rust), Powershell, Ninja, and CMake in `PATH`.
+Requirements:
 
-You'll also need the latest Android NDK. Create a file called `ndkpath.txt` containing the path to the directly where you extracted the ndk to.
+* [qpm](https://github.com/QuestPackageManager/QPM.CLI)
+* Powershell
+* Ninja + CMake in `PATH`
+* Latest Android NDK (`ndkpath.txt` should point to your NDK directory)
 
 ```sh
-qpm-rust restore
-qpm-rust cache legacy-fix
+qpm restore
 pwsh ./build.ps1
 pwsh ./createqmod.ps1 noodle_extensions
 ```
 
-## What still needs to be done?
-- Left handed mode
-- Beatmap note/obstacle/bomb count (includes fakes)
-- Some maps such as Centipede by totally balloon have fake notes registered as real notes
-- Make Noodle only run on Noodle maps
+## Contributing
+
+This port is still experimental and under active development. If you’d like to help:
+
+* Report bugs with logs, steps to reproduce, and map examples if possible
+* Test maps that rely on Noodle features and share results
+* Submit pull requests for fixes or missing functionality
+
+Any feedback or contributions are appreciated to move this port closer to full feature parity.
