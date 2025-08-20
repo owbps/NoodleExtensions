@@ -7,7 +7,7 @@ project(${COMPILE_ID})
 
 # c++ standard
 set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 message("Building ${COMPILE_ID} version ${MOD_VERSION} with ID ${MOD_ID} ${CMAKE_BUILD_TYPE}")
 
@@ -51,6 +51,9 @@ add_library(
         ${inline_hook_cpp}
 )
 
+# Ensure the final .so name matches mod.json ("libnoodleextensions.so")
+set_target_properties(${COMPILE_ID} PROPERTIES OUTPUT_NAME "noodleextensions")
+
 # add src dir as include dir
 target_include_directories(${COMPILE_ID} PRIVATE ${SOURCE_DIR})
 
@@ -68,22 +71,29 @@ target_link_libraries(${COMPILE_ID} PRIVATE -llog)
 # add extern stuff like libs and other includes
 include(extern.cmake)
 
+# Robust strip/rename steps that track the actual built file
 add_custom_command(TARGET ${COMPILE_ID} POST_BUILD
         COMMAND ${CMAKE_STRIP} -d --strip-all
-        "lib${COMPILE_ID}.so" -o "stripped_lib${COMPILE_ID}.so"
-        COMMENT "Strip debug symbols done on final binary.")
-
-add_custom_command(TARGET ${COMPILE_ID} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E make_directory debug
-        COMMENT "Rename the lib to debug_ since it has debug symbols"
+                "$<TARGET_FILE:${COMPILE_ID}>"
+                -o "$<TARGET_FILE_DIR:${COMPILE_ID}>/stripped_$<TARGET_FILE_NAME:${COMPILE_ID}>"
+        COMMENT "Strip debug symbols on final binary."
 )
 
 add_custom_command(TARGET ${COMPILE_ID} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E rename lib${COMPILE_ID}.so debug/lib${COMPILE_ID}.so
-        COMMENT "Rename the lib to debug_ since it has debug symbols"
+        COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:${COMPILE_ID}>/debug"
+        COMMENT "Create debug/ directory for unstripped binary"
 )
 
 add_custom_command(TARGET ${COMPILE_ID} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E rename stripped_lib${COMPILE_ID}.so lib${COMPILE_ID}.so
-        COMMENT "Rename the stripped lib to regular"
+        COMMAND ${CMAKE_COMMAND} -E rename
+                "$<TARGET_FILE:${COMPILE_ID}>"
+                "$<TARGET_FILE_DIR:${COMPILE_ID}>/debug/$<TARGET_FILE_NAME:${COMPILE_ID}>"
+        COMMENT "Move unstripped library to debug/ folder"
+)
+
+add_custom_command(TARGET ${COMPILE_ID} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E rename
+                "$<TARGET_FILE_DIR:${COMPILE_ID}>/stripped_$<TARGET_FILE_NAME:${COMPILE_ID}>"
+                "$<TARGET_FILE:${COMPILE_ID}>"
+        COMMENT "Replace original with stripped library"
 )

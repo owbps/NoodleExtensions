@@ -4,6 +4,9 @@
 #include "NEHooks.h"
 #include "NELogger.h"
 
+// VNJS entry hook installer (defined in src/hooks/vnjs_entry_hook.cpp)
+extern "C" void InstallVNJSEntryHook();
+
 extern "C" void setup(CModInfo* info) {
   info->id = "NoodleExtensions";
   info->version = VERSION;
@@ -14,7 +17,10 @@ extern "C" void setup(CModInfo* info) {
 extern "C" void late_load() {
   NELogger::Logger.info("Installing NoodleExtensions Hooks!");
 
-  // Install hooks
+  // Install VNJS entry hook (BeatmapObjectSpawnController::Start)
+  InstallVNJSEntryHook();
+
+  // Install all existing NoodleExtensions hooks
   InstallAndRegisterAll();
 
   NELogger::Logger.info("Installed NoodleExtensions Hooks!");

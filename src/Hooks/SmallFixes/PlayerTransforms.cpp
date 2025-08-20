@@ -44,7 +44,7 @@ MAKE_HOOK_MATCH(PlayerTransforms_HeadsetOffsetZ, &PlayerTransforms::Update, void
 
 void InstallPlayerTransformsHooks() {
   INSTALL_HOOK(NELogger::Logger, PlayerTransforms_Awake);
-  INSTALL_HOOK(NELogger::Logger, PlayerTransforms_HeadsetOffsetZ);
+  // INSTALL_HOOK(NELogger::Logger, PlayerTransforms_HeadsetOffsetZ);
 }
 
 NEInstallHooks(InstallPlayerTransformsHooks);

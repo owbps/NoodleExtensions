@@ -1,4 +1,5 @@
 {
+  "$schema": "https://raw.githubusercontent.com/QuestPackageManager/QPM.Package/refs/heads/main/qpm.schema.json",
   "version": "0.4.0",
   "sharedDir": "shared",
   "dependenciesDir": "extern",
@@ -13,10 +14,18 @@
   },
   "workspace": {
     "scripts": {
-      "build": ["pwsh ./scripts/build.ps1 --release"],
-      "clean": ["pwsh ./scripts/build.ps1 -clean"],
-      "copy": ["pwsh ./scripts/copy.ps1"],
-      "copyRelease": ["pwsh ./scripts/copy.ps1 --release"]
+      "build": [
+        "pwsh ./scripts/build.ps1 --release"
+      ],
+      "clean": [
+        "pwsh ./scripts/build.ps1 -clean"
+      ],
+      "copy": [
+        "pwsh ./scripts/copy.ps1"
+      ],
+      "copyRelease": [
+        "pwsh ./scripts/copy.ps1 --release"
+      ]
     },
     "ndk": "^27.2.12479018",
     "qmodIncludeDirs": [

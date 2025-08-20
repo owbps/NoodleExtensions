@@ -26,20 +26,22 @@
 
 using namespace GlobalNamespace;
 
-BeatmapCallbacksController* controller;
-static GlobalNamespace::IReadonlyBeatmapData* beatmapData;
+// Initialize globals defensively
+static BeatmapCallbacksController* controller = nullptr;
+static GlobalNamespace::IReadonlyBeatmapData* beatmapData = nullptr;
 
-static BeatmapObjectSpawnController::InitData* initData;
-static GlobalNamespace::BeatmapObjectSpawnMovementData* movementData;
+static BeatmapObjectSpawnController::InitData* initData = nullptr;
+static GlobalNamespace::BeatmapObjectSpawnMovementData* movementData = nullptr;
 
-inline float GetSpawnAheadTime(BeatmapObjectSpawnController::InitData* initData,
-                               BeatmapObjectSpawnMovementData* movementData, std::optional<float> inputNjs,
-                               std::optional<float> inputOffset) {
-  return 0.5f +
-         (SpawnDataHelper::GetJumpDuration(inputNjs, inputOffset) * 0.5f);
+// Mark helpers as maybe_unused while LateUpdate sorting is disabled.
+[[maybe_unused]] inline float GetSpawnAheadTime(BeatmapObjectSpawnController::InitData* initData_,
+                                                BeatmapObjectSpawnMovementData* movementData_,
+                                                std::optional<float> inputNjs,
+                                                std::optional<float> inputOffset) {
+  return 0.5f + (SpawnDataHelper::GetJumpDuration(inputNjs, inputOffset) * 0.5f);
 }
 
-inline float ObjectSortGetTime(BeatmapDataItem* n) {
+[[maybe_unused]] inline float ObjectSortGetTime(BeatmapDataItem* n) {
   static auto* customObstacleDataClass = classof(CustomJSONData::CustomObstacleData*);
   static auto* customNoteDataClass = classof(CustomJSONData::CustomNoteData*);
 
@@ -59,27 +61,24 @@ inline float ObjectSortGetTime(BeatmapDataItem* n) {
   }
 
   auto const& ad = getAD(customDataWrapper);
-
-  auto const njs = ad.objectData.noteJumpMovementSpeed;           // .value_or(NECaches::noteJumpMovementSpeed);
-  auto const spawnOffset = ad.objectData.noteJumpStartBeatOffset; //.value_or(NECaches::noteJumpStartBeatOffset);
+  auto const njs = ad.objectData.noteJumpMovementSpeed;
+  auto const spawnOffset = ad.objectData.noteJumpStartBeatOffset;
 
   *aheadTime = GetSpawnAheadTime(initData, movementData, njs, spawnOffset);
-
   return n->time - *aheadTime;
 }
 
-constexpr bool ObjectTimeCompare(BeatmapDataItem* a, BeatmapDataItem* b) {
+[[maybe_unused]] constexpr bool ObjectTimeCompare(BeatmapDataItem* a, BeatmapDataItem* b) {
   return ObjectSortGetTime(a) < ObjectSortGetTime(b);
 }
 
-System::Collections::Generic::LinkedList_1<BeatmapDataItem*>*
-SortAndOrderList(CustomJSONData::CustomBeatmapData* beatmapData) {
+[[maybe_unused]] System::Collections::Generic::LinkedList_1<BeatmapDataItem*>*
+SortAndOrderList(CustomJSONData::CustomBeatmapData* beatmapData_) {
   initData = NECaches::GameplayCoreContainer->Resolve<BeatmapObjectSpawnController::InitData*>();
   movementData = GlobalNamespace::BeatmapObjectSpawnMovementData::New_ctor();
   movementData->Init(initData->noteLinesCount, NECaches::JumpOffsetYProvider.ptr(), NEVector::Vector3::right());
 
-  auto items = beatmapData->GetAllBeatmapItemsCpp();
-
+  auto items = beatmapData_->GetAllBeatmapItemsCpp();
   std::stable_sort(items.begin(), items.end(), ObjectTimeCompare);
 
   initData = nullptr;
@@ -92,39 +91,28 @@ SortAndOrderList(CustomJSONData::CustomBeatmapData* beatmapData) {
   for (auto const& o : items) {
     newList->AddLast(o);
   }
-
   return newListPtr;
 }
 
+// --- TEMP 1.40.8 shim ---
+// Bypass the LateUpdate sorting path that triggers safeAbort during animated-note maps.
+// We'll re-enable a fixed version once the VNJS provider integration is in place.
 MAKE_HOOK_MATCH(BeatmapCallbacksUpdater_LateUpdate, &BeatmapCallbacksUpdater::LateUpdate, void,
                 BeatmapCallbacksUpdater* self) {
-  auto selfController = self->_beatmapCallbacksController;
-
-  // Reset to avoid overriding non NE maps
-  //    if ((controller || beatmapData) && (controller != selfController || selfController->beatmapData != beatmapData))
-  //    {
-  //        CustomJSONData::CustomEventCallbacks::firstNode.emplace(nullptr);
-  //    }
-
+  // Keep normal behavior for non-NE maps or when hooks disabled
   if (!Hooks::isNoodleHookEnabled()) {
     controller = nullptr;
     beatmapData = nullptr;
     return BeatmapCallbacksUpdater_LateUpdate(self);
   }
 
-  auto beatmapOpt = il2cpp_utils::try_cast<CustomJSONData::CustomBeatmapData>(selfController->_beatmapData);
-  if (beatmapOpt && controller != selfController || selfController->_beatmapData != beatmapData) {
-
-    CJDLogger::Logger.fmtLog<Paper::LogLevel::INF>("Using noodle sorted node");
-    controller = selfController;
-    beatmapData = selfController->_beatmapData;
-
-    auto items = SortAndOrderList(beatmapOpt.value());
-
-    auto first = items->get_First();
-    CustomJSONData::CustomEventCallbacks::firstNode.emplace(first);
+  static bool s_warned = false;
+  if (!s_warned) {
+    NELogger::Logger.warn("Bypassing NE LateUpdate sort (temporary 1.40.8 shim)");
+    s_warned = true;
   }
 
+  // Call the game’s original LateUpdate without any NE sorting/relinking for now.
   return BeatmapCallbacksUpdater_LateUpdate(self);
 }
 
